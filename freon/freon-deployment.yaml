@@ -1,0 +1,37 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: freon
+  labels:
+    app.kubernetes.io/component: ozone
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ozone
+      component: freon
+  template:
+    metadata:
+      labels:
+        app: ozone
+        component: freon
+    spec:
+      containers:
+      - name: freon
+        image: elek/ozone:20190710-1
+        args:
+        - ozone
+        - freon
+        - --server
+        - rk
+        - --numOfBuckets=2
+        - --numOfVolumes=2
+        - --factor=THREE
+        - --replicationType=RATIS
+        env:
+          - name: HADOOP_OPTS
+            value: -Xmx4g -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005
+        envFrom:
+        - configMapRef:
+            name: config

@@ -1,0 +1,67 @@
+source:
+  - path: ../../flokkr/ozone-flekszible
+  - path: ../../flokkr/infra-flekszible
+#    - url: github.com/flokkr/k8s
+import:
+    - path: ozone
+      transformations:
+         - type: Image
+           image: elek/ozone:20190710-1 
+         - type: ozone/prometheus
+         - type: DaemonToStatefulset
+         - type: PublishStatefulSet
+         - type: Add
+           path: 
+             - spec
+             - template
+             - spec
+             - volumes
+             - data
+             - emptyDir
+           value:
+              medium: Memory
+         - type: Change
+           path: 
+             - spec
+             - replicas
+           trigger:
+             metadata:
+                name: datanode
+           replacement: 30
+         - type: Add
+           path:
+             - spec
+           value:
+               podManagementPolicy: Parallel
+           trigger:
+              metadata:
+                  name: datanode
+    - path: grafana
+      transformations:
+      - type: PublishService
+      - type: grafana/install-dashboard
+        configmap: ozone-dashboard
+      destination: monitoring
+    - path: prometheus
+      destination: monitoring
+      transformations:
+        - type: PublishService
+    - path: ozone/freon
+      destination: freon
+      transformations:
+         - type: Image
+           image: elek/ozone:20190710-1 
+    - path: loki
+      destination: monitoring
+    - path: kubernetes-monitoring
+      destination: monitoring
+transformations:
+  - type: Namespace
+  - type: Add
+    trigger:
+      metadata:
+          name: config
+    path:
+      - data
+    value:
+      OZONE-SITE.XML_hdds.prometheus.endpoint.enabled: "true"
